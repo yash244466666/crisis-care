@@ -1,0 +1,68 @@
+version: '3.5'
+
+services:
+  backend:
+    build:
+      context: ./backend   # Points to the backend directory
+      dockerfile: Dockerfile # Uses the Dockerfile in the backend directory
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    environment:
+      - PORT=${PORT}
+
+    command: npm run start:dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile # Uses the Dockerfile in the frontend directory
+    ports:
+      - '3001:3000'
+    depends_on:
+      - backend
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    container_name: postgres
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    container_name: nest-pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin4
+    ports:
+      - '5050:80'
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
