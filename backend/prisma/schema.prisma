@@ -13,3 +13,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  email       String?     @unique
+  password    String?
+  role        Role?
+  phoneNumber String?
+  createdAt   DateTime?   @default(now())
+  tasks       Task[]     @relation("UserTasks")
+  inventories Inventory[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  VOLUNTEER
+}
+
+model Crisis {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  severity    Int
+  location    String
+  image       String?
+  status      CrisisStatus @default(PENDING)
+  requiredHelp String?
+  createdAt   DateTime   @default(now())
+  tasks       Task[]     @relation("CrisisTasks")
+
+  @@map("crises")
+}
+
+enum CrisisStatus {
+  PENDING
+  APPROVED
+  ONGOING
+  RESOLVED
+}
+
+model Donation {
+  id        Int       @id @default(autoincrement())
+  donor     String?
+  amount    Float
+  createdAt DateTime  @default(now())
+
+  @@map("donations")
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  description String
+  volunteer   User      @relation("UserTasks", fields: [volunteerId], references: [id])
+  volunteerId Int
+  crisis      Crisis    @relation("CrisisTasks", fields: [crisisId], references: [id])
+  crisisId    Int
+  createdAt   DateTime  @default(now())
+
+  @@map("tasks")
+}
+
+model Inventory {
+  id          Int         @id @default(autoincrement())
+  itemName    String
+  type        InventoryType
+  quantity    Int
+  addedBy     User        @relation(fields: [addedById], references: [id])
+  addedById   Int
+  createdAt   DateTime    @default(now())
+
+  @@map("inventories")
+}
+
+enum InventoryType {
+  RELIEF
+  EXPENSE
+}
